@@ -5,9 +5,16 @@ from typing import List
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from models.models import User, Magazine, Plan, Subscription
-from db.session import engine, SessionLocal
-from db.base import Base  # Import Base from base.py
+
+import sys
+import os
+
+# Add the src directory to the PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from app.models.models import User, Magazine, Plan, Subscription
+from app.db.session import engine, SessionLocal
+from app.db.base import Base  # Import Base from base.py
 from fastapi.security import OAuth2PasswordBearer
 
 # Create the database tables

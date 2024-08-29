@@ -1,10 +1,10 @@
 import random
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class UserCreate(BaseModel):
     username: str
-    email: EmailStr
+    email: str
     password: str
 
 

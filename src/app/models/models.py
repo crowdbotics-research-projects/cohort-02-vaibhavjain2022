@@ -3,7 +3,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from db.base import Base
+import sys
+import os
+
+# Add the src directory to the PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from app.db.base import Base
 
 
 class User(Base):
@@ -63,6 +69,7 @@ class Plan(Base):
         self.renewal_period = renewal_period
         # self.discount = discount
         # self.tier = tier
+
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
