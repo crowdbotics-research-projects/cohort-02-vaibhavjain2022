@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -44,7 +44,7 @@ def get_db():
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -184,8 +184,8 @@ def refresh_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get
 
 # Password reset
 @router.post("/users/reset-password")
-def reset_password(request: PasswordResetRequest, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == request.email).first()
+def reset_password(email: str = Query(...), db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     # Implement your password reset logic here (e.g., send email with reset link)
@@ -205,19 +205,6 @@ def deactivate_user(username: str, db: Session = Depends(get_db)):
     return {"message": "User deactivated"}
 
 
-# Check user status
-@router.get("/users/{username}")
-def get_user_status(username: str, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == username).first()
-    if not db_user or not db_user.is_active:
-        raise HTTPException(status_code=404, detail="User not found or deactivated")
-    return {
-        "username": db_user.username,
-        "email": db_user.email,
-        "is_active": db_user.is_active,
-    }
-
-
 # Get current user
 @router.get("/users/me")
 def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -232,6 +219,19 @@ def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     return {"username": db_user.username, "email": db_user.email}
+
+
+# Check user status
+@router.get("/users/{username}")
+def get_user_status(username: str, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user or not db_user.is_active:
+        raise HTTPException(status_code=404, detail="User not found or deactivated")
+    return {
+        "username": db_user.username,
+        "email": db_user.email,
+        "is_active": db_user.is_active,
+    }
 
 
 # Create a new magazine
@@ -392,28 +392,42 @@ def delete_plan(
 
 from models.schema import SubscriptionRead
 
+
 @router.post("/subscriptions/", response_model=SubscriptionRead)
-def create_subscription(subscription: SubscriptionCreate, db: Session = Depends(get_db)):
+def create_subscription(
+    subscription: SubscriptionCreate, db: Session = Depends(get_db)
+):
     db_subscription = Subscription(**subscription.dict())
     db.add(db_subscription)
     db.commit()
     db.refresh(db_subscription)
     return db_subscription
 
+
 @router.get("/subscriptions/", response_model=List[SubscriptionRead])
 def get_subscriptions(db: Session = Depends(get_db)):
     return db.query(Subscription).all()
 
+
 @router.get("/subscriptions/{subscription_id}", response_model=SubscriptionRead)
 def get_subscription(subscription_id: int, db: Session = Depends(get_db)):
-    subscription = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    subscription = (
+        db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    )
     if not subscription:
         raise HTTPException(status_code=404, detail="Subscription not found")
     return subscription
 
+
 @router.put("/subscriptions/{subscription_id}", response_model=SubscriptionRead)
-def update_subscription(subscription_id: int, subscription: SubscriptionUpdate, db: Session = Depends(get_db)):
-    db_subscription = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+def update_subscription(
+    subscription_id: int,
+    subscription: SubscriptionUpdate,
+    db: Session = Depends(get_db),
+):
+    db_subscription = (
+        db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    )
     if db_subscription is None:
         raise HTTPException(status_code=404, detail="Subscription not found")
     for key, value in subscription.dict().items():
@@ -422,9 +436,12 @@ def update_subscription(subscription_id: int, subscription: SubscriptionUpdate, 
     db.refresh(db_subscription)
     return db_subscription
 
+
 @router.delete("/subscriptions/{subscription_id}", response_model=SubscriptionRead)
 def delete_subscription(subscription_id: int, db: Session = Depends(get_db)):
-    db_subscription = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    db_subscription = (
+        db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    )
     if db_subscription is None:
         raise HTTPException(status_code=404, detail="Subscription not found")
     db_subscription.is_active = False
