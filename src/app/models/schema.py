@@ -16,7 +16,7 @@ class MagazineRead(MagazineBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PlanBase(BaseModel):
@@ -33,7 +33,7 @@ class PlanRead(PlanBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class SubscriptionBase(BaseModel):
@@ -57,4 +57,4 @@ class SubscriptionRead(SubscriptionBase):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
